@@ -15,6 +15,7 @@ import {
   FormControlLabel,
   Paper,
   Box,
+  Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -23,16 +24,52 @@ const DynamicTable = () => {
   const [tableData, setTableData] = useState([
     {
       name: '',
-      type: 'Select', // Change the label for the default option
+      type: '',
+      properties: '',
       dependantOn: [],
     },
   ]);
   const [deletedRows, setDeletedRows] = useState([]);
+  const [nameError, setNameError] = useState(false);
+  const [typeError, setTypeError] = useState(false);
+  const [repeatError, setRepeatError] = useState({ index: null, name: false });
+  const [selectedRegion, setSelectedRegion] = useState('');
+
+  const regions = [
+    'us-east-1',
+    'us-west-1',
+    'us-west-2',
+    'eu-west-1',
+    // Add more AWS regions as needed
+  ];
 
   const addRow = () => {
+    const lastRow = tableData[tableData.length - 1];
+
+    if (isNameRepeated(lastRow.name, lastRow.type, tableData.length - 1)) {
+      setNameError(true);
+      setTypeError(true);
+      setRepeatError({ index: tableData.length - 1, name: true });
+      return;
+    } else {
+      setNameError(false);
+      setTypeError(false);
+      setRepeatError({ index: null, name: false });
+    }
+
+    if (lastRow.name.trim() === '' || lastRow.type === '') {
+      setNameError(true);
+      setTypeError(true);
+      return;
+    } else {
+      setNameError(false);
+      setTypeError(false);
+    }
+
     const newRow = {
       name: '',
-      type: 'Select', // Change the label for the default option
+      type: '',
+      properties: '',
       dependantOn: [],
     };
     setTableData([...tableData, newRow]);
@@ -50,30 +87,58 @@ const DynamicTable = () => {
       i === rowIndex ? { ...row, [columnName]: value } : row
     );
     setTableData(newTableData);
+
+    if (isNameRepeated(value, newTableData[rowIndex].type, rowIndex)) {
+      setRepeatError({ index: rowIndex, name: true });
+    } else {
+      setRepeatError({ index: null, name: false });
+    }
   };
 
   const getPreviousNames = (currentIndex) => {
     return tableData.slice(0, currentIndex).map((row) => row.name);
   };
 
-  // Change the label for the default option in the "Type" select
-  const typeOptions = ["Select", "EC2", "S3", "DynamoDB", "Lambda"];
+  const isNameRepeated = (name, type, currentIndex) => {
+    return tableData
+      .slice(0, currentIndex)
+      .some((row) => row.name.trim() === name.trim() && row.type === type);
+  };
 
   useEffect(() => {
-    // Ensure that there is always at least one row when the component is mounted
     if (tableData.length === 0) {
       addRow();
     }
-  }, []); // Empty dependency array to run the effect only once
+  }, []);
 
   return (
     <Box component="div" className="cardout">
+      <Paper style={{ padding: '16px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Typography variant="body1" mr={1}>
+          Region:
+        </Typography>
+        <Select
+          value={selectedRegion}
+          onChange={(e) => setSelectedRegion(e.target.value)}
+          displayEmpty
+        >
+          <MenuItem value="" disabled>
+            Select Region
+          </MenuItem>
+          {regions.map((region) => (
+            <MenuItem key={region} value={region}>
+              {region}
+            </MenuItem>
+          ))}
+        </Select>
+      </Paper>
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
               <TableCell>Type</TableCell>
+              <TableCell>Properties</TableCell>
               <TableCell>Dependant On</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
@@ -86,19 +151,46 @@ const DynamicTable = () => {
                     type="text"
                     value={row.name}
                     onChange={(e) => updateCell(rowIndex, 'name', e.target.value)}
+                    error={nameError && row.name.trim() === ''}
+                    helperText={
+                      (nameError && row.name.trim() === '') || (repeatError.index === rowIndex && repeatError.name)
+                        ? (
+                          <Typography variant="caption" color="error">
+                            {repeatError.index === rowIndex ? 'The element already was configured.' : 'Please enter a valid name.'}
+                          </Typography>
+                        ) : ''
+                    }
                   />
                 </TableCell>
                 <TableCell>
                   <Select
                     value={row.type}
                     onChange={(e) => updateCell(rowIndex, 'type', e.target.value)}
+                    error={typeError && row.type === ''}
+                    displayEmpty
                   >
-                    {typeOptions.map((option) => (
-                      <MenuItem key={option} value={option}>
-                        {option}
-                      </MenuItem>
-                    ))}
+                    <MenuItem value="" disabled>
+                      Select
+                    </MenuItem>
+                    <MenuItem value="EC2">EC2</MenuItem>
+                    <MenuItem value="S3">S3</MenuItem>
+                    <MenuItem value="DynamoDB">DynamoDB</MenuItem>
+                    <MenuItem value="Lambda">Lambda</MenuItem>
                   </Select>
+                  {typeError && row.type === '' && (
+                    <div>
+                      <Typography variant="caption" color="error" mt={1}>
+                        Please select a valid type.
+                      </Typography>
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <TextField
+                    type="text"
+                    value={row.properties}
+                    onChange={(e) => updateCell(rowIndex, 'properties', e.target.value)}
+                  />
                 </TableCell>
                 <TableCell>
                   <Box style={{ maxHeight: '100px', overflowY: 'auto' }}>
