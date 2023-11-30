@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import '../App.css';
 import {
   Button,
   Table,
@@ -11,8 +10,6 @@ import {
   TextField,
   Select,
   MenuItem,
-  Checkbox,
-  FormControlLabel,
   Paper,
   Box,
   Typography,
@@ -34,14 +31,10 @@ const DynamicTable = () => {
   const [typeError, setTypeError] = useState(false);
   const [repeatError, setRepeatError] = useState({ index: null, name: false });
   const [selectedRegion, setSelectedRegion] = useState('');
+  const [regionError, setRegionError] = useState(false);
+  const [jsonArray, setJsonArray] = useState([]);
 
-  const regions = [
-    'us-east-1',
-    'us-west-1',
-    'us-west-2',
-    'eu-west-1',
-    // Add more AWS regions as needed
-  ];
+  const regions = ['us-east-1', 'us-west-1', 'us-west-2', 'eu-west-1'];
 
   const addRow = () => {
     const lastRow = tableData[tableData.length - 1];
@@ -73,6 +66,7 @@ const DynamicTable = () => {
       dependantOn: [],
     };
     setTableData([...tableData, newRow]);
+    setJsonArray([...tableData, newRow]);
   };
 
   const deleteRow = (rowIndex) => {
@@ -93,6 +87,13 @@ const DynamicTable = () => {
     } else {
       setRepeatError({ index: null, name: false });
     }
+
+    if (!repeatError.name) {
+      const updatedJsonArray = jsonArray.map((obj, i) =>
+        i === rowIndex ? { ...obj, [columnName]: value } : obj
+      );
+      setJsonArray(updatedJsonArray);
+    }
   };
 
   const getPreviousNames = (currentIndex) => {
@@ -105,15 +106,39 @@ const DynamicTable = () => {
       .some((row) => row.name.trim() === name.trim() && row.type === type);
   };
 
+  const handleGenerateTemplate = () => {
+    if (selectedRegion === '') {
+      setRegionError(true);
+    } else {
+      setRegionError(false);
+      const templateData = [{ region: selectedRegion }, ...jsonArray];
+      console.log(templateData);
+      // Additional logic for generating the template
+      // You can use the templateData for further processing
+    }
+  };
+
   useEffect(() => {
     if (tableData.length === 0) {
       addRow();
     }
   }, []);
 
+  useEffect(() => {
+    setJsonArray(tableData);
+  }, [tableData]);
+
   return (
     <Box component="div" className="cardout">
-      <Paper style={{ padding: '16px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Paper
+        style={{
+          padding: '16px',
+          marginBottom: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <Typography variant="body1" mr={1}>
           Region:
         </Typography>
@@ -121,6 +146,7 @@ const DynamicTable = () => {
           value={selectedRegion}
           onChange={(e) => setSelectedRegion(e.target.value)}
           displayEmpty
+          error={regionError}
         >
           <MenuItem value="" disabled>
             Select Region
@@ -131,8 +157,13 @@ const DynamicTable = () => {
             </MenuItem>
           ))}
         </Select>
+        {regionError && (
+          <Typography variant="caption" color="error">
+            You have to select a region.
+          </Typography>
+        )}
       </Paper>
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} style={{ padding: '16px' }}>
         <Table>
           <TableHead>
             <TableRow>
@@ -153,12 +184,15 @@ const DynamicTable = () => {
                     onChange={(e) => updateCell(rowIndex, 'name', e.target.value)}
                     error={nameError && row.name.trim() === ''}
                     helperText={
-                      (nameError && row.name.trim() === '') || (repeatError.index === rowIndex && repeatError.name)
-                        ? (
-                          <Typography variant="caption" color="error">
-                            {repeatError.index === rowIndex ? 'The element already was configured.' : 'Please enter a valid name.'}
-                          </Typography>
-                        ) : ''
+                      (nameError && row.name.trim() === '') || (repeatError.index === rowIndex && repeatError.name) ? (
+                        <Typography variant="caption" color="error">
+                          {repeatError.index === rowIndex
+                            ? 'The element already was configured.'
+                            : 'Please enter a valid name.'}
+                        </Typography>
+                      ) : (
+                        ''
+                      )
                     }
                   />
                 </TableCell>
@@ -194,34 +228,14 @@ const DynamicTable = () => {
                 </TableCell>
                 <TableCell>
                   <Box style={{ maxHeight: '100px', overflowY: 'auto' }}>
-                    {getPreviousNames(rowIndex).map((name) => (
-                      <div key={name}>
-                        <FormControlLabel
-                          control={
-                            <Checkbox
-                              checked={row.dependantOn.includes(name)}
-                              onChange={() => {
-                                const updatedDependantOn = row.dependantOn.includes(name)
-                                  ? row.dependantOn.filter((n) => n !== name)
-                                  : [...row.dependantOn, name];
-
-                                updateCell(rowIndex, 'dependantOn', updatedDependantOn);
-                              }}
-                            />
-                          }
-                          label={name}
-                        />
-                      </div>
+                    {row.dependantOn.map((dependency, dependencyIndex) => (
+                      <div key={dependencyIndex}>{dependency}</div>
                     ))}
                   </Box>
                 </TableCell>
                 <TableCell>
                   {rowIndex === tableData.length - 1 ? (
-                    <Button
-                      variant="contained"
-                      startIcon={<AddIcon />}
-                      onClick={addRow}
-                    >
+                    <Button variant="contained" color="primary" startIcon={<AddIcon />} onClick={addRow}>
                       Add
                     </Button>
                   ) : (
@@ -241,9 +255,13 @@ const DynamicTable = () => {
         </Table>
       </TableContainer>
       <Box mt={2} display="flex" justifyContent="center">
-        <Button variant="contained" color="primary">
+        <Button variant="contained" color="primary" onClick={handleGenerateTemplate}>
           Generate Template
         </Button>
+      </Box>
+      <Box mt={2} display="flex" flexDirection="column" alignItems="center">
+        <Typography variant="h6">JSON Array</Typography>
+        <pre>{JSON.stringify([{ region: selectedRegion }, ...jsonArray], null, 2)}</pre>
       </Box>
     </Box>
   );
