@@ -13,9 +13,13 @@ import {
   Paper,
   Box,
   Typography,
+  Modal,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import Autocomplete from '@mui/material/Autocomplete';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
 
 const DynamicTable = () => {
   const [tableData, setTableData] = useState([
@@ -33,6 +37,8 @@ const DynamicTable = () => {
   const [selectedRegion, setSelectedRegion] = useState('');
   const [regionError, setRegionError] = useState(false);
   const [jsonArray, setJsonArray] = useState([]);
+  const [templatesModalOpen, setTemplatesModalOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState('');
 
   const regions = ['us-east-1', 'us-west-1', 'us-west-2', 'eu-west-1'];
 
@@ -96,6 +102,17 @@ const DynamicTable = () => {
     }
   };
 
+  const handleDependantOnChange = (rowIndex, newValue) => {
+    const newTableData = tableData.map((row, i) => {
+      if (i === rowIndex) {
+        return { ...row, dependantOn: newValue };
+      } else {
+        return row;
+      }
+    });
+    setTableData(newTableData);
+  };
+
   const getPreviousNames = (currentIndex) => {
     return tableData.slice(0, currentIndex).map((row) => row.name);
   };
@@ -116,6 +133,19 @@ const DynamicTable = () => {
       // Additional logic for generating the template
       // You can use the templateData for further processing
     }
+  };
+
+  const handleOpenTemplatesModal = () => {
+    setTemplatesModalOpen(true);
+  };
+
+  const handleCloseTemplatesModal = () => {
+    setTemplatesModalOpen(false);
+  };
+
+  const handleSelectTemplate = (template) => {
+    setSelectedTemplate(template);
+    handleCloseTemplatesModal();
   };
 
   useEffect(() => {
@@ -170,7 +200,7 @@ const DynamicTable = () => {
               <TableCell>Name</TableCell>
               <TableCell>Type</TableCell>
               <TableCell>Properties</TableCell>
-              <TableCell>Dependant On</TableCell>
+              <TableCell style={{ maxWidth: '300px', width: '300px' }}>Dependant On</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -220,18 +250,68 @@ const DynamicTable = () => {
                   )}
                 </TableCell>
                 <TableCell>
-                  <TextField
-                    type="text"
-                    value={row.properties}
-                    onChange={(e) => updateCell(rowIndex, 'properties', e.target.value)}
-                  />
+                  {row.type === 'DynamoDB' && (
+                    <Box>
+                      <Button variant="outlined" onClick={handleOpenTemplatesModal}>
+                        Select Template
+                      </Button>
+                      <Modal open={templatesModalOpen} onClose={handleCloseTemplatesModal}>
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            width: 400,
+                            bgcolor: 'background.paper',
+                            border: '2px solid #000',
+                            boxShadow: 24,
+                            p: 4,
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                          }}
+                        >
+                          <Typography variant="h6" mb={2}>
+                            Select Template
+                          </Typography>
+                          <Button variant="contained" onClick={() => handleSelectTemplate('Template 1')}>
+                            Template 1
+                          </Button>
+                          <Button variant="contained" onClick={() => handleSelectTemplate('Template 2')}>
+                            Template 2
+                          </Button>
+                          <Button variant="contained" onClick={() => handleSelectTemplate('Template 3')}>
+                            Template 3
+                          </Button>
+                          <Button variant="contained" onClick={() => handleSelectTemplate('Template 4')}>
+                            Template 4
+                          </Button>
+                          <Button variant="contained" onClick={() => handleSelectTemplate('Template 5')}>
+                            Template 5
+                          </Button>
+                        </Box>
+                      </Modal>
+                    </Box>
+                  )}
                 </TableCell>
-                <TableCell>
-                  <Box style={{ maxHeight: '100px', overflowY: 'auto' }}>
-                    {row.dependantOn.map((dependency, dependencyIndex) => (
-                      <div key={dependencyIndex}>{dependency}</div>
-                    ))}
-                  </Box>
+                <TableCell style={{ maxWidth: '300px', width: '300px' }}>
+                  <Autocomplete
+                    multiple
+                    options={tableData.slice(0, rowIndex).map((prevRow) => prevRow.name)}
+                    value={tableData[rowIndex].dependantOn}
+                    onChange={(e, newValue) => handleDependantOnChange(rowIndex, newValue)}
+                    disableCloseOnSelect
+                    renderOption={(props, option, { selected }) => (
+                      <li {...props}>
+                        <FormControlLabel
+                          control={<Checkbox checked={selected} />}
+                          label={option}
+                        />
+                      </li>
+                    )}
+                    renderInput={(params) => (
+                      <TextField {...params} variant="standard" label="Dependant On" />
+                    )}
+                    style={{ maxHeight: '100%', overflowY: 'auto', overflowX: 'hidden' }}
+                  />
                 </TableCell>
                 <TableCell>
                   {rowIndex === tableData.length - 1 ? (
@@ -261,7 +341,7 @@ const DynamicTable = () => {
       </Box>
       <Box mt={2} display="flex" flexDirection="column" alignItems="center">
         <Typography variant="h6">JSON Array</Typography>
-        <pre>{JSON.stringify([{ region: selectedRegion }, ...jsonArray], null, 2)}</pre>
+        <pre>{JSON.stringify([{ region: selectedRegion, template: selectedTemplate }, ...jsonArray], null, 2)}</pre>
       </Box>
     </Box>
   );
