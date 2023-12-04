@@ -13,21 +13,23 @@ import {
   Paper,
   Box,
   Typography,
-  Modal,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Autocomplete from '@mui/material/Autocomplete';
-import Checkbox from '@mui/material/Checkbox';
-import FormControlLabel from '@mui/material/FormControlLabel';
 
 const DynamicTable = () => {
   const [tableData, setTableData] = useState([
     {
       name: '',
       type: '',
-      properties: '',
+      properties: {},
       dependantOn: [],
+      template: null,
     },
   ]);
   const [deletedRows, setDeletedRows] = useState([]);
@@ -37,10 +39,138 @@ const DynamicTable = () => {
   const [selectedRegion, setSelectedRegion] = useState('');
   const [regionError, setRegionError] = useState(false);
   const [jsonArray, setJsonArray] = useState([]);
-  const [templatesModalOpen, setTemplatesModalOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState('');
+  const [openPopup, setOpenPopup] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
 
   const regions = ['us-east-1', 'us-west-1', 'us-west-2', 'eu-west-1'];
+
+  const templates = [
+    {
+      name: "Template1",
+      data: {
+        "MyTable1": {
+          "Type": "AWS::DynamoDB::Table",
+          "Properties": {
+            "TableName": "MyTable1",
+            "AttributeDefinitions": [
+              {"AttributeName": "Attribute1", "AttributeType": "S"},
+              {"AttributeName": "Attribute2", "AttributeType": "N"},
+              {"AttributeName": "Attribute3", "AttributeType": "S"},
+              {"AttributeName": "Attribute4", "AttributeType": "S"},
+              {"AttributeName": "Attribute5", "AttributeType": "N"}
+            ],
+            "KeySchema": [
+              {"AttributeName": "Attribute1", "KeyType": "HASH"}
+            ],
+            "ProvisionedThroughput": {
+              "ReadCapacityUnits": 5,
+              "WriteCapacityUnits": 5
+            }
+          }
+        }
+      }
+    },
+    {
+      name: "Template2",
+      data: {
+        "MyTable2": {
+          "Type": "AWS::DynamoDB::Table",
+          "Properties": {
+            "TableName": "MyTable2",
+            "AttributeDefinitions": [
+              {"AttributeName": "AttributeA", "AttributeType": "S"},
+              {"AttributeName": "AttributeB", "AttributeType": "N"},
+              {"AttributeName": "AttributeC", "AttributeType": "S"},
+              {"AttributeName": "AttributeD", "AttributeType": "S"},
+              {"AttributeName": "AttributeE", "AttributeType": "N"}
+            ],
+            "KeySchema": [
+              {"AttributeName": "AttributeA", "KeyType": "HASH"}
+            ],
+            "ProvisionedThroughput": {
+              "ReadCapacityUnits": 5,
+              "WriteCapacityUnits": 5
+            }
+          }
+        }
+      }
+    },
+    {
+      name: "Template3",
+      data: {
+        "MyTable3": {
+          "Type": "AWS::DynamoDB::Table",
+          "Properties": {
+            "TableName": "MyTable3",
+            "AttributeDefinitions": [
+              {"AttributeName": "Field1", "AttributeType": "S"},
+              {"AttributeName": "Field2", "AttributeType": "N"},
+              {"AttributeName": "Field3", "AttributeType": "S"},
+              {"AttributeName": "Field4", "AttributeType": "S"},
+              {"AttributeName": "Field5", "AttributeType": "N"}
+            ],
+            "KeySchema": [
+              {"AttributeName": "Field1", "KeyType": "HASH"}
+            ],
+            "ProvisionedThroughput": {
+              "ReadCapacityUnits": 5,
+              "WriteCapacityUnits": 5
+            }
+          }
+        }
+      }
+    },
+    {
+      name: "Template4",
+      data: {
+        "MyTable4": {
+          "Type": "AWS::DynamoDB::Table",
+          "Properties": {
+            "TableName": "MyTable4",
+            "AttributeDefinitions": [
+              {"AttributeName": "Col1", "AttributeType": "S"},
+              {"AttributeName": "Col2", "AttributeType": "N"},
+              {"AttributeName": "Col3", "AttributeType": "S"},
+              {"AttributeName": "Col4", "AttributeType": "S"},
+              {"AttributeName": "Col5", "AttributeType": "N"}
+            ],
+            "KeySchema": [
+              {"AttributeName": "Col1", "KeyType": "HASH"}
+            ],
+            "ProvisionedThroughput": {
+              "ReadCapacityUnits": 5,
+              "WriteCapacityUnits": 5
+            }
+          }
+        }
+      }
+    },
+    {
+      name: "Template5",
+      data: {        
+        "MyTable5": {
+          "Type": "AWS::DynamoDB::Table",
+          "Properties": {
+            "TableName": "MyTable5",
+            "AttributeDefinitions": [
+              {"AttributeName": "FieldA", "AttributeType": "S"},
+              {"AttributeName": "FieldB", "AttributeType": "N"},
+              {"AttributeName": "FieldC", "AttributeType": "S"},
+              {"AttributeName": "FieldD", "AttributeType": "S"},
+              {"AttributeName": "FieldE", "AttributeType": "N"}
+            ],
+            "KeySchema": [
+              {"AttributeName": "FieldA", "KeyType": "HASH"}
+            ],
+            "ProvisionedThroughput": {
+              "ReadCapacityUnits": 5,
+              "WriteCapacityUnits": 5
+            }
+          }
+        }
+      }
+    }
+  ]
 
   const addRow = () => {
     const lastRow = tableData[tableData.length - 1];
@@ -68,8 +198,9 @@ const DynamicTable = () => {
     const newRow = {
       name: '',
       type: '',
-      properties: '',
+      properties: {},
       dependantOn: [],
+      template: null,
     };
     setTableData([...tableData, newRow]);
     setJsonArray([...tableData, newRow]);
@@ -135,17 +266,25 @@ const DynamicTable = () => {
     }
   };
 
-  const handleOpenTemplatesModal = () => {
-    setTemplatesModalOpen(true);
+  const handleOpenPopup = (rowIndex) => {
+    setOpenPopup(true);
+    setSelectedTemplate(tableData[rowIndex].template);
   };
 
-  const handleCloseTemplatesModal = () => {
-    setTemplatesModalOpen(false);
+  const handleClosePopup = () => {
+    setOpenPopup(false);
   };
 
-  const handleSelectTemplate = (template) => {
+  const handleTemplateSelection = (template) => {
     setSelectedTemplate(template);
-    handleCloseTemplatesModal();
+  };
+
+  const handleConfirmTemplate = (rowIndex) => {
+    const newTableData = tableData.map((row, i) =>
+      i === rowIndex ? { ...row, template: selectedTemplate } : row
+    );
+    setTableData(newTableData);
+    handleClosePopup();
   };
 
   useEffect(() => {
@@ -250,68 +389,26 @@ const DynamicTable = () => {
                   )}
                 </TableCell>
                 <TableCell>
-                  {row.type === 'DynamoDB' && (
-                    <Box>
-                      <Button variant="outlined" onClick={handleOpenTemplatesModal}>
-                        Select Template
-                      </Button>
-                      <Modal open={templatesModalOpen} onClose={handleCloseTemplatesModal}>
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            width: 400,
-                            bgcolor: 'background.paper',
-                            border: '2px solid #000',
-                            boxShadow: 24,
-                            p: 4,
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                          }}
-                        >
-                          <Typography variant="h6" mb={2}>
-                            Select Template
-                          </Typography>
-                          <Button variant="contained" onClick={() => handleSelectTemplate('Template 1')}>
-                            Template 1
-                          </Button>
-                          <Button variant="contained" onClick={() => handleSelectTemplate('Template 2')}>
-                            Template 2
-                          </Button>
-                          <Button variant="contained" onClick={() => handleSelectTemplate('Template 3')}>
-                            Template 3
-                          </Button>
-                          <Button variant="contained" onClick={() => handleSelectTemplate('Template 4')}>
-                            Template 4
-                          </Button>
-                          <Button variant="contained" onClick={() => handleSelectTemplate('Template 5')}>
-                            Template 5
-                          </Button>
-                        </Box>
-                      </Modal>
-                    </Box>
-                  )}
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleOpenPopup(rowIndex)}
+                  >
+                    View/Edit
+                  </Button>
                 </TableCell>
                 <TableCell style={{ maxWidth: '300px', width: '300px' }}>
-                  <Autocomplete
-                    multiple
-                    options={tableData.slice(0, rowIndex).map((prevRow) => prevRow.name)}
-                    value={tableData[rowIndex].dependantOn}
-                    onChange={(e, newValue) => handleDependantOnChange(rowIndex, newValue)}
-                    disableCloseOnSelect
-                    renderOption={(props, option, { selected }) => (
-                      <li {...props}>
-                        <FormControlLabel
-                          control={<Checkbox checked={selected} />}
-                          label={option}
-                        />
-                      </li>
-                    )}
-                    renderInput={(params) => (
-                      <TextField {...params} variant="standard" label="Dependant On" />
-                    )}
-                    style={{ maxHeight: '100%', overflowY: 'auto', overflowX: 'hidden' }}
-                  />
+                  {row.type === 'DynamoDB' && (
+                    <Autocomplete
+                      multiple
+                      options={getPreviousNames(rowIndex)}
+                      value={row.dependantOn}
+                      onChange={(_, newValue) => handleDependantOnChange(rowIndex, newValue)}
+                      renderInput={(params) => (
+                        <TextField {...params} variant="standard" label="Dependant On" />
+                      )}
+                    />
+                  )}
                 </TableCell>
                 <TableCell>
                   {rowIndex === tableData.length - 1 ? (
@@ -338,10 +435,40 @@ const DynamicTable = () => {
         <Button variant="contained" color="primary" onClick={handleGenerateTemplate}>
           Generate Template
         </Button>
+        {selectedTemplate && (
+          <Box ml={2}>
+            <Typography variant="body1">Selected Template:</Typography>
+            <Typography variant="body2">{JSON.stringify(selectedTemplate.data)}</Typography>
+          </Box>
+        )}
       </Box>
-      <Box mt={2} display="flex" flexDirection="column" alignItems="center">
-        <Typography variant="h6">JSON Array</Typography>
-        <pre>{JSON.stringify([{ region: selectedRegion, template: selectedTemplate }, ...jsonArray], null, 2)}</pre>
+      <Box mt={2} display="flex" flexDirection="column">
+        <Dialog open={openPopup} onClose={handleClosePopup}>
+          <DialogTitle>Select Template</DialogTitle>
+          <DialogContent>
+            <Autocomplete
+              options={templates}
+              getOptionLabel={(option) => option.name}
+              value={selectedTemplate}
+              onChange={(_, newValue) => handleTemplateSelection(newValue)}
+              renderInput={(params) => <TextField {...params} label="Select Template" />}
+            />
+            {selectedTemplate && (
+              <Box mt={2}>
+                <Typography variant="body1">Template Content:</Typography>
+                <Typography variant="body2">{JSON.stringify(selectedTemplate.data)}</Typography>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClosePopup} color="primary">
+              Cancel
+            </Button>
+            <Button onClick={() => handleConfirmTemplate(tableData.length - 1)} color="primary">
+              Confirm
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </Box>
   );
