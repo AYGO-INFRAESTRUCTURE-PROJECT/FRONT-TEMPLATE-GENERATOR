@@ -171,6 +171,7 @@ const DynamicTable = () => {
       }
     }
   ]
+  
 
   const addRow = () => {
     const lastRow = tableData[tableData.length - 1];
@@ -284,6 +285,7 @@ const DynamicTable = () => {
       i === rowIndex ? { ...row, template: selectedTemplate } : row
     );
     setTableData(newTableData);
+    setJsonArray([...newTableData]); // Update JSON array with the selected template
     handleClosePopup();
   };
 
@@ -435,12 +437,6 @@ const DynamicTable = () => {
         <Button variant="contained" color="primary" onClick={handleGenerateTemplate}>
           Generate Template
         </Button>
-        {selectedTemplate && (
-          <Box ml={2}>
-            <Typography variant="body1">Selected Template:</Typography>
-            <Typography variant="body2">{JSON.stringify(selectedTemplate.data)}</Typography>
-          </Box>
-        )}
       </Box>
       <Box mt={2} display="flex" flexDirection="column">
         <Dialog open={openPopup} onClose={handleClosePopup}>
