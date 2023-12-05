@@ -27,9 +27,10 @@ const DynamicTable = () => {
     {
       name: '',
       type: '',
-      properties: {},
       dependantOn: [],
-      template: null,
+      AttributeDefinitions: null,
+      KeySchema: null,
+      ProvisionedThroughput: null,
     },
   ]);
   const [deletedRows, setDeletedRows] = useState([]);
@@ -41,6 +42,7 @@ const DynamicTable = () => {
   const [jsonArray, setJsonArray] = useState([]);
   const [openPopup, setOpenPopup] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [showTemplatePopup, setShowTemplatePopup] = useState(false);
 
   const regions = ['us-east-1', 'us-west-1', 'us-west-2', 'eu-west-1'];
 
@@ -53,14 +55,14 @@ const DynamicTable = () => {
           "Properties": {
             "TableName": "MyTable1",
             "AttributeDefinitions": [
-              {"AttributeName": "Attribute1", "AttributeType": "S"},
-              {"AttributeName": "Attribute2", "AttributeType": "N"},
-              {"AttributeName": "Attribute3", "AttributeType": "S"},
-              {"AttributeName": "Attribute4", "AttributeType": "S"},
-              {"AttributeName": "Attribute5", "AttributeType": "N"}
+              { "AttributeName": "Attribute1", "AttributeType": "S" },
+              { "AttributeName": "Attribute2", "AttributeType": "N" },
+              { "AttributeName": "Attribute3", "AttributeType": "S" },
+              { "AttributeName": "Attribute4", "AttributeType": "S" },
+              { "AttributeName": "Attribute5", "AttributeType": "N" }
             ],
             "KeySchema": [
-              {"AttributeName": "Attribute1", "KeyType": "HASH"}
+              { "AttributeName": "Attribute1", "KeyType": "HASH" }
             ],
             "ProvisionedThroughput": {
               "ReadCapacityUnits": 5,
@@ -78,14 +80,14 @@ const DynamicTable = () => {
           "Properties": {
             "TableName": "MyTable2",
             "AttributeDefinitions": [
-              {"AttributeName": "AttributeA", "AttributeType": "S"},
-              {"AttributeName": "AttributeB", "AttributeType": "N"},
-              {"AttributeName": "AttributeC", "AttributeType": "S"},
-              {"AttributeName": "AttributeD", "AttributeType": "S"},
-              {"AttributeName": "AttributeE", "AttributeType": "N"}
+              { "AttributeName": "AttributeA", "AttributeType": "S" },
+              { "AttributeName": "AttributeB", "AttributeType": "N" },
+              { "AttributeName": "AttributeC", "AttributeType": "S" },
+              { "AttributeName": "AttributeD", "AttributeType": "S" },
+              { "AttributeName": "AttributeE", "AttributeType": "N" }
             ],
             "KeySchema": [
-              {"AttributeName": "AttributeA", "KeyType": "HASH"}
+              { "AttributeName": "AttributeA", "KeyType": "HASH" }
             ],
             "ProvisionedThroughput": {
               "ReadCapacityUnits": 5,
@@ -103,14 +105,14 @@ const DynamicTable = () => {
           "Properties": {
             "TableName": "MyTable3",
             "AttributeDefinitions": [
-              {"AttributeName": "Field1", "AttributeType": "S"},
-              {"AttributeName": "Field2", "AttributeType": "N"},
-              {"AttributeName": "Field3", "AttributeType": "S"},
-              {"AttributeName": "Field4", "AttributeType": "S"},
-              {"AttributeName": "Field5", "AttributeType": "N"}
+              { "AttributeName": "Field1", "AttributeType": "S" },
+              { "AttributeName": "Field2", "AttributeType": "N" },
+              { "AttributeName": "Field3", "AttributeType": "S" },
+              { "AttributeName": "Field4", "AttributeType": "S" },
+              { "AttributeName": "Field5", "AttributeType": "N" }
             ],
             "KeySchema": [
-              {"AttributeName": "Field1", "KeyType": "HASH"}
+              { "AttributeName": "Field1", "KeyType": "HASH" }
             ],
             "ProvisionedThroughput": {
               "ReadCapacityUnits": 5,
@@ -128,14 +130,14 @@ const DynamicTable = () => {
           "Properties": {
             "TableName": "MyTable4",
             "AttributeDefinitions": [
-              {"AttributeName": "Col1", "AttributeType": "S"},
-              {"AttributeName": "Col2", "AttributeType": "N"},
-              {"AttributeName": "Col3", "AttributeType": "S"},
-              {"AttributeName": "Col4", "AttributeType": "S"},
-              {"AttributeName": "Col5", "AttributeType": "N"}
+              { "AttributeName": "Col1", "AttributeType": "S" },
+              { "AttributeName": "Col2", "AttributeType": "N" },
+              { "AttributeName": "Col3", "AttributeType": "S" },
+              { "AttributeName": "Col4", "AttributeType": "S" },
+              { "AttributeName": "Col5", "AttributeType": "N" }
             ],
             "KeySchema": [
-              {"AttributeName": "Col1", "KeyType": "HASH"}
+              { "AttributeName": "Col1", "KeyType": "HASH" }
             ],
             "ProvisionedThroughput": {
               "ReadCapacityUnits": 5,
@@ -147,20 +149,20 @@ const DynamicTable = () => {
     },
     {
       name: "Template5",
-      data: {        
+      data: {
         "MyTable5": {
           "Type": "AWS::DynamoDB::Table",
           "Properties": {
             "TableName": "MyTable5",
             "AttributeDefinitions": [
-              {"AttributeName": "FieldA", "AttributeType": "S"},
-              {"AttributeName": "FieldB", "AttributeType": "N"},
-              {"AttributeName": "FieldC", "AttributeType": "S"},
-              {"AttributeName": "FieldD", "AttributeType": "S"},
-              {"AttributeName": "FieldE", "AttributeType": "N"}
+              { "AttributeName": "FieldA", "AttributeType": "S" },
+              { "AttributeName": "FieldB", "AttributeType": "N" },
+              { "AttributeName": "FieldC", "AttributeType": "S" },
+              { "AttributeName": "FieldD", "AttributeType": "S" },
+              { "AttributeName": "FieldE", "AttributeType": "N" }
             ],
             "KeySchema": [
-              {"AttributeName": "FieldA", "KeyType": "HASH"}
+              { "AttributeName": "FieldA", "KeyType": "HASH" }
             ],
             "ProvisionedThroughput": {
               "ReadCapacityUnits": 5,
@@ -171,7 +173,6 @@ const DynamicTable = () => {
       }
     }
   ]
-  
 
   const addRow = () => {
     const lastRow = tableData[tableData.length - 1];
@@ -199,9 +200,10 @@ const DynamicTable = () => {
     const newRow = {
       name: '',
       type: '',
-      properties: {},
       dependantOn: [],
-      template: null,
+      AttributeDefinitions: null,
+      KeySchema: null,
+      ProvisionedThroughput: null,
     };
     setTableData([...tableData, newRow]);
     setJsonArray([...tableData, newRow]);
@@ -248,28 +250,63 @@ const DynamicTable = () => {
   const getPreviousNames = (currentIndex) => {
     return tableData.slice(0, currentIndex).map((row) => row.name);
   };
-
+  const [modifiedJsonArray, setModifiedJsonArray] = useState([]);
   const isNameRepeated = (name, type, currentIndex) => {
     return tableData
       .slice(0, currentIndex)
       .some((row) => row.name.trim() === name.trim() && row.type === type);
   };
 
+
   const handleGenerateTemplate = () => {
     if (selectedRegion === '') {
       setRegionError(true);
     } else {
       setRegionError(false);
-      const templateData = [{ region: selectedRegion }, ...jsonArray];
-      console.log(templateData);
-      // Additional logic for generating the template
-      // You can use the templateData for further processing
+
+      // Filter out empty arrays and null variables, omit the last element
+      const filteredJsonArray = jsonArray
+        .slice(0, -1)
+        .map((row) => {
+          const filteredRow = { ...row };
+
+          // Remove empty arrays
+          if (filteredRow.dependantOn.length === 0) {
+            delete filteredRow.dependantOn;
+          }
+
+          // Remove null variables
+          Object.keys(filteredRow).forEach((key) => {
+            if (filteredRow[key] === null) {
+              delete filteredRow[key];
+            }
+          });
+
+          return filteredRow;
+        });
+
+      // Update the class variable with the modified JSON array
+      setModifiedJsonArray(filteredJsonArray);
+
+      // Open the template popup
+      handleShowTemplatePopup();
     }
+  };
+
+  const handleShowTemplatePopup = (content) => {
+    setPopupTemplateContent(content);
+    setShowTemplatePopup(true);
+  };
+
+  const handleCloseTemplatePopup = () => {
+    setShowTemplatePopup(false);
   };
 
   const handleOpenPopup = (rowIndex) => {
     setOpenPopup(true);
-    setSelectedTemplate(tableData[rowIndex].template);
+    // Set the content of the template in the popup
+    setPopupTemplateContent(JSON.stringify(jsonArray[rowIndex], null, 2));
+    setSelectedTemplate(tableData[rowIndex].Properties);
   };
 
   const handleClosePopup = () => {
@@ -278,22 +315,34 @@ const DynamicTable = () => {
 
   const handleTemplateSelection = (template) => {
     setSelectedTemplate(template);
+    // Set the content of the template in the popup
+    setPopupTemplateContent(JSON.stringify(template.data, null, 2));
   };
+
+  const [popupTemplateContent, setPopupTemplateContent] = useState('');
 
   const handleConfirmTemplate = (rowIndex) => {
-    const newTableData = tableData.map((row, i) =>
-      i === rowIndex ? { ...row, template: selectedTemplate } : row
-    );
-    setTableData(newTableData);
-    setJsonArray([...newTableData]); // Update JSON array with the selected template
-    handleClosePopup();
-  };
+    let newTableData = [...tableData];
 
-  useEffect(() => {
-    if (tableData.length === 0) {
-      addRow();
+    if (selectedTemplate) {
+      const { data } = selectedTemplate;
+      const properties = data && data[Object.keys(data)[0]].Properties;
+
+      if (properties) {
+        // Exclude the "TableName" property
+        const { TableName, AttributeDefinitions, KeySchema, ProvisionedThroughput, ...updatedProperties } = properties;
+
+        newTableData = newTableData.map((row, i) =>
+          i === rowIndex ? { ...row, AttributeDefinitions, KeySchema, ProvisionedThroughput } : row
+        );
+      }
     }
-  }, []);
+
+    setTableData(newTableData);
+    handleClosePopup();
+
+    return newTableData[rowIndex]?.Properties;
+  };
 
   useEffect(() => {
     setJsonArray(tableData);
@@ -391,26 +440,26 @@ const DynamicTable = () => {
                   )}
                 </TableCell>
                 <TableCell>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => handleOpenPopup(rowIndex)}
-                  >
-                    View/Edit
-                  </Button>
+                  {row.type === 'DynamoDB' && (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => handleOpenPopup(rowIndex)}
+                    >
+                      View/Edit
+                    </Button>
+                  )}
                 </TableCell>
                 <TableCell style={{ maxWidth: '300px', width: '300px' }}>
-                  {row.type === 'DynamoDB' && (
-                    <Autocomplete
-                      multiple
-                      options={getPreviousNames(rowIndex)}
-                      value={row.dependantOn}
-                      onChange={(_, newValue) => handleDependantOnChange(rowIndex, newValue)}
-                      renderInput={(params) => (
-                        <TextField {...params} variant="standard" label="Dependant On" />
-                      )}
-                    />
-                  )}
+                  <Autocomplete
+                    multiple
+                    options={getPreviousNames(rowIndex)}
+                    value={row.dependantOn}
+                    onChange={(_, newValue) => handleDependantOnChange(rowIndex, newValue)}
+                    renderInput={(params) => (
+                      <TextField {...params} variant="standard" label="Dependant On" />
+                    )}
+                  />
                 </TableCell>
                 <TableCell>
                   {rowIndex === tableData.length - 1 ? (
@@ -438,6 +487,21 @@ const DynamicTable = () => {
           Generate Template
         </Button>
       </Box>
+      {/* Popup for showing the generated template */}
+      <Dialog open={showTemplatePopup} onClose={handleCloseTemplatePopup}>
+        <DialogTitle>Modified Template</DialogTitle>
+        <DialogContent>
+          {/* Display the modified template here */}
+          <Typography variant="body2">
+            <pre>{JSON.stringify(modifiedJsonArray, null, 2)}</pre>
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseTemplatePopup} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
       <Box mt={2} display="flex" flexDirection="column">
         <Dialog open={openPopup} onClose={handleClosePopup}>
           <DialogTitle>Select Template</DialogTitle>
@@ -452,7 +516,9 @@ const DynamicTable = () => {
             {selectedTemplate && (
               <Box mt={2}>
                 <Typography variant="body1">Template Content:</Typography>
-                <Typography variant="body2">{JSON.stringify(selectedTemplate.data)}</Typography>
+                <Typography variant="body2">
+                  <pre>{popupTemplateContent}</pre>
+                </Typography>
               </Box>
             )}
           </DialogContent>
