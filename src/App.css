@@ -28,6 +28,12 @@
   color: #61dafb;
 }
 
+.centreCont{
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+}
+
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);
@@ -42,21 +48,8 @@
   -webkit-backdrop-filter: blur(12px);
   border-radius: 10px;
   padding: 20px;
-  max-width: 100%;
-  border: 1px solid #ffcf00;
+  border: 1px solid #000000;
   width: fit-content;
   color: #fff;
   height: fit-content;
-}
-
-.cardin {
-  background: #fff;
-  box-shadow: 0 8px 2px 0 rgba(31, 38, 135, 0.37);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 10px;
-  border: 1px solid rgba(255, 207, 0, 255);
-  width: 100%;
-  color: #090811;
-  height: 100%;
 }

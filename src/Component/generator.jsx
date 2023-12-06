@@ -17,6 +17,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Container,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -380,6 +381,7 @@ const DynamicTable = () => {
   
   };
   return (
+  <Container className="centreCont">
     <Box component="div" className="cardout">
       <Paper
         style={{
@@ -414,7 +416,7 @@ const DynamicTable = () => {
           </Typography>
         )}
       </Paper>
-      <TableContainer component={Paper} style={{ padding: '16px' }}>
+      <TableContainer component={Paper} >
         <Table>
           <TableHead>
             <TableRow>
@@ -564,6 +566,7 @@ const DynamicTable = () => {
         </Dialog>
       </Box>
     </Box>
+    </Container>
   );
 };
 
