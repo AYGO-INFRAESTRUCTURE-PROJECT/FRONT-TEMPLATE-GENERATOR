@@ -31,6 +31,8 @@ const DynamicTable = () => {
       AttributeDefinitions: null,
       KeySchema: null,
       ProvisionedThroughput: null,
+      versioned: null,
+      vpc: null,
     },
   ]);
   const [deletedRows, setDeletedRows] = useState([]);
@@ -43,6 +45,7 @@ const DynamicTable = () => {
   const [openPopup, setOpenPopup] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [showTemplatePopup, setShowTemplatePopup] = useState(false);
+  const [cleanedTemplateData, setCleanedTemplateData] = useState([]);
 
   const regions = ['us-east-1', 'us-west-1', 'us-west-2', 'eu-west-1'];
 
@@ -174,6 +177,10 @@ const DynamicTable = () => {
     }
   ]
 
+  const isEmptyObject = (obj) => {
+    return obj === null || (typeof obj === 'object' && Object.keys(obj).length === 0);
+  };
+
   const addRow = () => {
     const lastRow = tableData[tableData.length - 1];
 
@@ -204,6 +211,8 @@ const DynamicTable = () => {
       AttributeDefinitions: null,
       KeySchema: null,
       ProvisionedThroughput: null,
+      versioned: null,
+      vpc: null,
     };
     setTableData([...tableData, newRow]);
     setJsonArray([...tableData, newRow]);
@@ -221,20 +230,36 @@ const DynamicTable = () => {
       i === rowIndex ? { ...row, [columnName]: value } : row
     );
     setTableData(newTableData);
-
-    if (isNameRepeated(value, newTableData[rowIndex].type, rowIndex)) {
-      setRepeatError({ index: rowIndex, name: true });
-    } else {
-      setRepeatError({ index: null, name: false });
-    }
-
-    if (!repeatError.name) {
-      const updatedJsonArray = jsonArray.map((obj, i) =>
-        i === rowIndex ? { ...obj, [columnName]: value } : obj
+  
+    if (columnName === 'type') {
+      // Reset other properties based on the new type
+      const updatedRow = { ...newTableData[rowIndex] };
+  
+      if (value === 'EC2') {
+        updatedRow.vpc = { name: 'test-vpc' };
+      } else {
+        updatedRow.vpc = null;
+      }
+  
+      if (value === 'S3') {
+        updatedRow.versioned = true;
+      } else {
+        updatedRow.versioned = null;
+      }
+  
+      if (value !== 'mongoDB') {
+        // Reset properties to null when changing from mongoDB
+        updatedRow.AttributeDefinitions = null;
+        updatedRow.KeySchema = null;
+        updatedRow.ProvisionedThroughput = null;
+      }
+  
+      setTableData((prevTableData) =>
+        prevTableData.map((row, i) => (i === rowIndex ? updatedRow : row))
       );
-      setJsonArray(updatedJsonArray);
     }
   };
+  
 
   const handleDependantOnChange = (rowIndex, newValue) => {
     const newTableData = tableData.map((row, i) => {
@@ -250,51 +275,54 @@ const DynamicTable = () => {
   const getPreviousNames = (currentIndex) => {
     return tableData.slice(0, currentIndex).map((row) => row.name);
   };
-  const [modifiedJsonArray, setModifiedJsonArray] = useState([]);
+
   const isNameRepeated = (name, type, currentIndex) => {
     return tableData
       .slice(0, currentIndex)
-      .some((row) => row.name.trim() === name.trim() && row.type === type);
+      .some((row) => typeof row.name === 'string' && typeof name === 'string' && row.name.trim() === name.trim() && row.type === type);
   };
 
-
   const handleGenerateTemplate = () => {
+    console.log(jsonArray);
     if (selectedRegion === '') {
       setRegionError(true);
     } else {
       setRegionError(false);
-
-      // Filter out empty arrays and null variables, omit the last element
-      const filteredJsonArray = jsonArray
-        .slice(0, -1)
-        .map((row) => {
-          const filteredRow = { ...row };
-
-          // Remove empty arrays
-          if (filteredRow.dependantOn.length === 0) {
-            delete filteredRow.dependantOn;
+  
+      // Create a JSON object with the selected region
+      const regionJson = { region: selectedRegion };
+  
+      // Omit "Properties" key from each row and exclude the last row
+      const templateData = [
+        regionJson,
+        ...jsonArray.slice(0, jsonArray.length - 1).map(({ Properties, ...rest }) => rest),
+      ];
+  
+      // Omit arrays that are empty and variables that are null
+      const cleanedTemplateData = templateData.map((row) => {
+        const cleanedRow = {};
+        for (let key in row) {
+          if (
+            row[key] !== null &&
+            row[key] !== undefined &&
+            (!Array.isArray(row[key]) || row[key].length > 0)
+          ) {
+            cleanedRow[key] = row[key];
           }
-
-          // Remove null variables
-          Object.keys(filteredRow).forEach((key) => {
-            if (filteredRow[key] === null) {
-              delete filteredRow[key];
-            }
-          });
-
-          return filteredRow;
-        });
-
-      // Update the class variable with the modified JSON array
-      setModifiedJsonArray(filteredJsonArray);
-
+        }
+        return cleanedRow;
+      });
+  
+      setCleanedTemplateData(cleanedTemplateData);
+  
       // Open the template popup
       handleShowTemplatePopup();
     }
   };
+  
+  
 
-  const handleShowTemplatePopup = (content) => {
-    setPopupTemplateContent(content);
+  const handleShowTemplatePopup = () => {
     setShowTemplatePopup(true);
   };
 
@@ -304,8 +332,6 @@ const DynamicTable = () => {
 
   const handleOpenPopup = (rowIndex) => {
     setOpenPopup(true);
-    // Set the content of the template in the popup
-    setPopupTemplateContent(JSON.stringify(jsonArray[rowIndex], null, 2));
     setSelectedTemplate(tableData[rowIndex].Properties);
   };
 
@@ -315,39 +341,44 @@ const DynamicTable = () => {
 
   const handleTemplateSelection = (template) => {
     setSelectedTemplate(template);
-    // Set the content of the template in the popup
-    setPopupTemplateContent(JSON.stringify(template.data, null, 2));
-  };
-
-  const [popupTemplateContent, setPopupTemplateContent] = useState('');
-
-  const handleConfirmTemplate = (rowIndex) => {
-    let newTableData = [...tableData];
-
-    if (selectedTemplate) {
-      const { data } = selectedTemplate;
-      const properties = data && data[Object.keys(data)[0]].Properties;
-
-      if (properties) {
-        // Exclude the "TableName" property
-        const { TableName, AttributeDefinitions, KeySchema, ProvisionedThroughput, ...updatedProperties } = properties;
-
-        newTableData = newTableData.map((row, i) =>
-          i === rowIndex ? { ...row, AttributeDefinitions, KeySchema, ProvisionedThroughput } : row
-        );
-      }
-    }
-
-    setTableData(newTableData);
-    handleClosePopup();
-
-    return newTableData[rowIndex]?.Properties;
+    updateCell(tableData.length - 1, 'Properties', template.data);
   };
 
   useEffect(() => {
     setJsonArray(tableData);
   }, [tableData]);
-
+  const handleConfirmTemplate = (rowIndex) => {
+    let newTableData = [...tableData];
+  
+    if (selectedTemplate) {
+      const { data } = selectedTemplate;
+      const properties = data && data[Object.keys(data)[0]].Properties;
+  
+      if (properties) {
+        // Extract only the necessary properties
+        const { AttributeDefinitions, KeySchema, ProvisionedThroughput } = properties;
+  
+        newTableData = newTableData.map((row, i) =>
+          i === rowIndex
+            ? {
+                ...row,
+                AttributeDefinitions,
+                KeySchema,
+                ProvisionedThroughput,
+                // Add other properties specific to your row if needed
+                versioned: row.type === 'S3' ? true : null,
+                vpc: row.type === 'EC2' ? { name: 'test-vpc' } : null,
+              }
+            : row
+        );
+      }
+    }
+  
+    setTableData(newTableData);
+    handleClosePopup();
+  
+  
+  };
   return (
     <Box component="div" className="cardout">
       <Paper
@@ -489,11 +520,11 @@ const DynamicTable = () => {
       </Box>
       {/* Popup for showing the generated template */}
       <Dialog open={showTemplatePopup} onClose={handleCloseTemplatePopup}>
-        <DialogTitle>Modified Template</DialogTitle>
+        <DialogTitle>Generated Template</DialogTitle>
         <DialogContent>
-          {/* Display the modified template here */}
+          {/* Display the generated template here */}
           <Typography variant="body2">
-            <pre>{JSON.stringify(modifiedJsonArray, null, 2)}</pre>
+            <pre>{JSON.stringify(cleanedTemplateData, null, 2)}</pre>
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -517,7 +548,7 @@ const DynamicTable = () => {
               <Box mt={2}>
                 <Typography variant="body1">Template Content:</Typography>
                 <Typography variant="body2">
-                  <pre>{popupTemplateContent}</pre>
+                  <pre>{JSON.stringify(selectedTemplate, null, 2)}</pre>
                 </Typography>
               </Box>
             )}
