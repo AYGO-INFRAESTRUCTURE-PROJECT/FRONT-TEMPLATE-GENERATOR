@@ -233,7 +233,6 @@ const DynamicTable = () => {
     setTableData(newTableData);
   
     if (columnName === 'type') {
-      // Reset other properties based on the new type
       const updatedRow = { ...newTableData[rowIndex] };
   
       if (value === 'EC2') {
@@ -248,8 +247,7 @@ const DynamicTable = () => {
         updatedRow.versioned = null;
       }
   
-      if (value !== 'mongoDB') {
-        // Reset properties to null when changing from mongoDB
+      if (value !== 'DYNAMO_DB') {
         updatedRow.AttributeDefinitions = null;
         updatedRow.KeySchema = null;
         updatedRow.ProvisionedThroughput = null;
@@ -289,17 +287,11 @@ const DynamicTable = () => {
       setRegionError(true);
     } else {
       setRegionError(false);
-  
-      // Create a JSON object with the selected region
       const regionJson = { region: selectedRegion };
-  
-      // Omit "Properties" key from each row and exclude the last row
       const templateData = [
         regionJson,
         ...jsonArray.slice(0, jsonArray.length - 1).map(({ Properties, ...rest }) => rest),
       ];
-  
-      // Omit arrays that are empty and variables that are null
       const cleanedTemplateData = templateData.map((row) => {
         const cleanedRow = {};
         for (let key in row) {
@@ -315,13 +307,27 @@ const DynamicTable = () => {
       });
   
       setCleanedTemplateData(cleanedTemplateData);
-  
-      // Open the template popup
       handleShowTemplatePopup();
     }
   };
   
-  
+  const handleSendTemplate = () => {
+    const arrayJson = cleanedTemplateData;
+    fetch('https://prueba.com', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(arrayJson),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log('Success:', data);
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+      });
+  };
 
   const handleShowTemplatePopup = () => {
     setShowTemplatePopup(true);
@@ -356,7 +362,6 @@ const DynamicTable = () => {
       const properties = data && data[Object.keys(data)[0]].Properties;
   
       if (properties) {
-        // Extract only the necessary properties
         const { AttributeDefinitions, KeySchema, ProvisionedThroughput } = properties;
   
         newTableData = newTableData.map((row, i) =>
@@ -366,7 +371,6 @@ const DynamicTable = () => {
                 AttributeDefinitions,
                 KeySchema,
                 ProvisionedThroughput,
-                // Add other properties specific to your row if needed
                 versioned: row.type === 'S3' ? true : null,
                 vpc: row.type === 'EC2' ? { name: 'test-vpc' } : null,
               }
@@ -461,8 +465,7 @@ const DynamicTable = () => {
                     </MenuItem>
                     <MenuItem value="EC2">EC2</MenuItem>
                     <MenuItem value="S3">S3</MenuItem>
-                    <MenuItem value="DynamoDB">DynamoDB</MenuItem>
-                    <MenuItem value="Lambda">Lambda</MenuItem>
+                    <MenuItem value="DYNAMO_DB">DynamoDB</MenuItem>
                   </Select>
                   {typeError && row.type === '' && (
                     <div>
@@ -473,7 +476,7 @@ const DynamicTable = () => {
                   )}
                 </TableCell>
                 <TableCell>
-                  {row.type === 'DynamoDB' && (
+                  {row.type === 'DYNAMO_DB' && (
                     <Button
                       variant="contained"
                       color="primary"
@@ -520,14 +523,15 @@ const DynamicTable = () => {
           Generate Template
         </Button>
       </Box>
-      {/* Popup for showing the generated template */}
       <Dialog open={showTemplatePopup} onClose={handleCloseTemplatePopup}>
         <DialogTitle>Generated Template</DialogTitle>
         <DialogContent>
-          {/* Display the generated template here */}
           <Typography variant="body2">
             <pre>{JSON.stringify(cleanedTemplateData, null, 2)}</pre>
           </Typography>
+          <Button variant="contained" color="primary" onClick={handleSendTemplate}>
+            Send Template
+          </Button>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseTemplatePopup} color="primary">
