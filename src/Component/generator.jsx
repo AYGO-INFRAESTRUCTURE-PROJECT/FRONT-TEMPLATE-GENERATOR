@@ -232,16 +232,16 @@ const DynamicTable = () => {
       i === rowIndex ? { ...row, [columnName]: value } : row
     );
     setTableData(newTableData);
-  
+
     if (columnName === 'type') {
       const updatedRow = { ...newTableData[rowIndex] };
-  
+
       if (value === 'EC2') {
         updatedRow.vpc = { name: 'test-vpc' };
       } else {
         updatedRow.vpc = null;
       }
-  
+
       if (value === 'S3') {
         updatedRow.versioned = true;
       } else {
@@ -253,19 +253,19 @@ const DynamicTable = () => {
       } else {
         updatedRow.partition_key = null;
       }
-  
+
       if (value !== 'DYNAMO_DB') {
         updatedRow.AttributeDefinitions = null;
         updatedRow.KeySchema = null;
         updatedRow.ProvisionedThroughput = null;
       }
-  
+
       setTableData((prevTableData) =>
         prevTableData.map((row, i) => (i === rowIndex ? updatedRow : row))
       );
     }
   };
-  
+
 
 
   const getPreviousNames = (currentIndex) => {
@@ -299,21 +299,21 @@ const DynamicTable = () => {
         }
         return cleanedRow;
       });
-  
+
       const stackName = "STACKX";
       const region = selectedRegion;
-      
+
       const finalTemplate = {
         stack_name: stackName,
         region: region,
         resources: cleanedTemplateData,
       };
-  
+
       setCleanedTemplateData(finalTemplate);
       handleShowTemplatePopup();
     }
   };
-  
+
   const handleSendTemplate = () => {
     const arrayJson = cleanedTemplateData;
     fetch('http://ec2-18-206-45-139.compute-1.amazonaws.com:7000/v1/synth/deployments', {
@@ -359,208 +359,208 @@ const DynamicTable = () => {
   }, [tableData]);
   const handleConfirmTemplate = (rowIndex) => {
     let newTableData = [...tableData];
-  
+
     if (selectedTemplate) {
       const { data } = selectedTemplate;
       const properties = data && data[Object.keys(data)[0]].Properties;
-  
+
       if (properties) {
         const { AttributeDefinitions, KeySchema, ProvisionedThroughput } = properties;
-  
+
         newTableData = newTableData.map((row, i) =>
           i === rowIndex
             ? {
-                ...row,
-                AttributeDefinitions,
-                KeySchema,
-                ProvisionedThroughput,
-                versioned: row.type === 'S3' ? true : null,
-                vpc: row.type === 'EC2' ? { name: 'test-vpc' } : null,
-              }
+              ...row,
+              AttributeDefinitions,
+              KeySchema,
+              ProvisionedThroughput,
+              versioned: row.type === 'S3' ? true : null,
+              vpc: row.type === 'EC2' ? { name: 'test-vpc' } : null,
+            }
             : row
         );
       }
     }
-  
+
     setTableData(newTableData);
     handleClosePopup();
-  
-  
+
+
   };
   return (
-  <Container className="centreCont">
-    <Box component="div" className="cardout">
-      <Paper
-        style={{
-          padding: '16px',
-          marginBottom: '16px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Typography variant="body1" mr={1}>
-          Region:
-        </Typography>
-        <Select
-          value={selectedRegion}
-          onChange={(e) => setSelectedRegion(e.target.value)}
-          displayEmpty
-          error={regionError}
+    <Container className="centreCont">
+      <Box component="div" className="cardout">
+        <Paper
+          style={{
+            padding: '16px',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
-          <MenuItem value="" disabled>
-            Select Region
-          </MenuItem>
-          {regions.map((region) => (
-            <MenuItem key={region} value={region}>
-              {region}
+          <Typography variant="body1" mr={1}>
+            Region:
+          </Typography>
+          <Select
+            value={selectedRegion}
+            onChange={(e) => setSelectedRegion(e.target.value)}
+            displayEmpty
+            error={regionError}
+          >
+            <MenuItem value="" disabled>
+              Select Region
             </MenuItem>
-          ))}
-        </Select>
-        {regionError && (
-          <Typography variant="caption" color="error">
-            You have to select a region.
-          </Typography>
-        )}
-      </Paper>
-      <TableContainer component={Paper} >
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>Properties</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {tableData.map((row, rowIndex) => (
-              <TableRow key={rowIndex}>
-                <TableCell>
-                  <TextField
-                    type="text"
-                    value={row.name}
-                    onChange={(e) => updateCell(rowIndex, 'name', e.target.value)}
-                    error={nameError && row.name.trim() === ''}
-                    helperText={
-                      (nameError && row.name.trim() === '') || (repeatError.index === rowIndex && repeatError.name) ? (
-                        <Typography variant="caption" color="error">
-                          {repeatError.index === rowIndex
-                            ? 'The element already was configured.'
-                            : 'Please enter a valid name.'}
-                        </Typography>
-                      ) : (
-                        ''
-                      )
-                    }
-                  />
-                </TableCell>
-                <TableCell>
-                  <Select
-                    value={row.type}
-                    onChange={(e) => updateCell(rowIndex, 'type', e.target.value)}
-                    error={typeError && row.type === ''}
-                    displayEmpty
-                  >
-                    <MenuItem value="" disabled>
-                      Select
-                    </MenuItem>
-                    <MenuItem value="EC2">EC2</MenuItem>
-                    <MenuItem value="S3">S3</MenuItem>
-                    <MenuItem value="DYNAMO_DB">DynamoDB</MenuItem>
-                  </Select>
-                  {typeError && row.type === '' && (
-                    <div>
-                      <Typography variant="caption" color="error" mt={1}>
-                        Please select a valid type.
-                      </Typography>
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {row.type === 'DYNAMO_DB' && (
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() => handleOpenPopup(rowIndex)}
-                    >
-                      View/Edit
-                    </Button>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {rowIndex === tableData.length - 1 ? (
-                    <Button variant="contained" color="primary" startIcon={<AddIcon />} onClick={addRow}>
-                      Add
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      startIcon={<DeleteIcon />}
-                      onClick={() => deleteRow(rowIndex)}
-                    >
-                      Delete
-                    </Button>
-                  )}
-                </TableCell>
-              </TableRow>
+            {regions.map((region) => (
+              <MenuItem key={region} value={region}>
+                {region}
+              </MenuItem>
             ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-      <Box mt={2} display="flex" justifyContent="center">
-        <Button variant="contained" color="primary" onClick={handleGenerateTemplate}>
-          Generate Template
-        </Button>
-      </Box>
-      <Dialog open={showTemplatePopup} onClose={handleCloseTemplatePopup}>
-        <DialogTitle>Generated Template</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2">
-            <pre>{JSON.stringify(cleanedTemplateData, null, 2)}</pre>
-          </Typography>
-          <Button variant="contained" color="primary" onClick={handleSendTemplate}>
-            Send Template
+          </Select>
+          {regionError && (
+            <Typography variant="caption" color="error">
+              You have to select a region.
+            </Typography>
+          )}
+        </Paper>
+        <TableContainer component={Paper} >
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell>Type</TableCell>
+                <TableCell>Properties</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {tableData.map((row, rowIndex) => (
+                <TableRow key={rowIndex}>
+                  <TableCell>
+                    <TextField
+                      type="text"
+                      value={row.name}
+                      onChange={(e) => updateCell(rowIndex, 'name', e.target.value)}
+                      error={nameError && row.name.trim() === ''}
+                      helperText={
+                        (nameError && row.name.trim() === '') || (repeatError.index === rowIndex && repeatError.name) ? (
+                          <Typography variant="caption" color="error">
+                            {repeatError.index === rowIndex
+                              ? 'The element already was configured.'
+                              : 'Please enter a valid name.'}
+                          </Typography>
+                        ) : (
+                          ''
+                        )
+                      }
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={row.type}
+                      onChange={(e) => updateCell(rowIndex, 'type', e.target.value)}
+                      error={typeError && row.type === ''}
+                      displayEmpty
+                    >
+                      <MenuItem value="" disabled>
+                        Select
+                      </MenuItem>
+                      <MenuItem value="EC2">EC2</MenuItem>
+                      <MenuItem value="S3">S3</MenuItem>
+                      <MenuItem value="DYNAMO_DB">DynamoDB</MenuItem>
+                    </Select>
+                    {typeError && row.type === '' && (
+                      <div>
+                        <Typography variant="caption" color="error" mt={1}>
+                          Please select a valid type.
+                        </Typography>
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {row.type === 'DYNAMO_DB' && (
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => handleOpenPopup(rowIndex)}
+                      >
+                        View/Edit
+                      </Button>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {rowIndex === tableData.length - 1 ? (
+                      <Button variant="contained" color="primary" startIcon={<AddIcon />} onClick={addRow}>
+                        Add
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="contained"
+                        color="secondary"
+                        startIcon={<DeleteIcon />}
+                        onClick={() => deleteRow(rowIndex)}
+                      >
+                        Delete
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <Box mt={2} display="flex" justifyContent="center">
+          <Button variant="contained" color="primary" onClick={handleGenerateTemplate}>
+            Generate Template
           </Button>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseTemplatePopup} color="primary">
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <Box mt={2} display="flex" flexDirection="column">
-        <Dialog open={openPopup} onClose={handleClosePopup}>
-          <DialogTitle>Select Template</DialogTitle>
+        </Box>
+        <Dialog open={showTemplatePopup} onClose={handleCloseTemplatePopup}>
+          <DialogTitle>Generated Template</DialogTitle>
           <DialogContent>
-            <Autocomplete
-              options={templates}
-              getOptionLabel={(option) => option.name}
-              value={selectedTemplate}
-              onChange={(_, newValue) => handleTemplateSelection(newValue)}
-              renderInput={(params) => <TextField {...params} label="Select Template" />}
-            />
-            {selectedTemplate && (
-              <Box mt={2}>
-                <Typography variant="body1">Template Content:</Typography>
-                <Typography variant="body2">
-                  <pre>{JSON.stringify(selectedTemplate, null, 2)}</pre>
-                </Typography>
-              </Box>
-            )}
+            <Typography variant="body2">
+              <pre>{JSON.stringify(cleanedTemplateData, null, 2)}</pre>
+            </Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleClosePopup} color="primary">
-              Cancel
+            <Button onClick={handleCloseTemplatePopup} color="primary">
+              Close
             </Button>
-            <Button onClick={() => handleConfirmTemplate(tableData.length - 1)} color="primary">
-              Confirm
+            <Button variant="contained" color="primary" onClick={handleSendTemplate}>
+              Send Template
             </Button>
           </DialogActions>
         </Dialog>
+        <Box mt={2} display="flex" flexDirection="column">
+          <Dialog open={openPopup} onClose={handleClosePopup}>
+            <DialogTitle>Select Template</DialogTitle>
+            <DialogContent>
+              <Autocomplete
+                options={templates}
+                getOptionLabel={(option) => option.name}
+                value={selectedTemplate}
+                onChange={(_, newValue) => handleTemplateSelection(newValue)}
+                renderInput={(params) => <TextField {...params} label="Select Template" />}
+              />
+              {selectedTemplate && (
+                <Box mt={2}>
+                  <Typography variant="body1">Template Content:</Typography>
+                  <Typography variant="body2">
+                    <pre>{JSON.stringify(selectedTemplate, null, 2)}</pre>
+                  </Typography>
+                </Box>
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleClosePopup} color="primary">
+                Cancel
+              </Button>
+              <Button onClick={() => handleConfirmTemplate(tableData.length - 1)} color="primary">
+                Confirm
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </Box>
       </Box>
-    </Box>
     </Container>
   );
 };
