@@ -28,12 +28,13 @@ const DynamicTable = () => {
     {
       name: '',
       type: '',
-      dependantOn: [],
       AttributeDefinitions: null,
       KeySchema: null,
       ProvisionedThroughput: null,
       versioned: null,
       vpc: null,
+      partition_key: null
+
     },
   ]);
   const [deletedRows, setDeletedRows] = useState([]);
@@ -208,12 +209,12 @@ const DynamicTable = () => {
     const newRow = {
       name: '',
       type: '',
-      dependantOn: [],
       AttributeDefinitions: null,
       KeySchema: null,
       ProvisionedThroughput: null,
       versioned: null,
       vpc: null,
+      partition_key: null
     };
     setTableData([...tableData, newRow]);
     setJsonArray([...tableData, newRow]);
@@ -246,6 +247,12 @@ const DynamicTable = () => {
       } else {
         updatedRow.versioned = null;
       }
+
+      if (value === 'DYNAMO_DB') {
+        updatedRow.partition_key = "ADDRESS";
+      } else {
+        updatedRow.partition_key = null;
+      }
   
       if (value !== 'DYNAMO_DB') {
         updatedRow.AttributeDefinitions = null;
@@ -260,16 +267,6 @@ const DynamicTable = () => {
   };
   
 
-  const handleDependantOnChange = (rowIndex, newValue) => {
-    const newTableData = tableData.map((row, i) => {
-      if (i === rowIndex) {
-        return { ...row, dependantOn: newValue };
-      } else {
-        return row;
-      }
-    });
-    setTableData(newTableData);
-  };
 
   const getPreviousNames = (currentIndex) => {
     return tableData.slice(0, currentIndex).map((row) => row.name);
@@ -282,14 +279,11 @@ const DynamicTable = () => {
   };
 
   const handleGenerateTemplate = () => {
-    console.log(jsonArray);
     if (selectedRegion === '') {
       setRegionError(true);
     } else {
       setRegionError(false);
-      const regionJson = { region: selectedRegion };
       const templateData = [
-        regionJson,
         ...jsonArray.slice(0, jsonArray.length - 1).map(({ Properties, ...rest }) => rest),
       ];
       const cleanedTemplateData = templateData.map((row) => {
@@ -306,14 +300,23 @@ const DynamicTable = () => {
         return cleanedRow;
       });
   
-      setCleanedTemplateData(cleanedTemplateData);
+      const stackName = "STACKX";
+      const region = selectedRegion;
+      
+      const finalTemplate = {
+        stack_name: stackName,
+        region: region,
+        resources: cleanedTemplateData,
+      };
+  
+      setCleanedTemplateData(finalTemplate);
       handleShowTemplatePopup();
     }
   };
   
   const handleSendTemplate = () => {
     const arrayJson = cleanedTemplateData;
-    fetch('https://prueba.com', {
+    fetch('http://ec2-18-206-45-139.compute-1.amazonaws.com:7000/v1/synth/deployments', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -427,7 +430,6 @@ const DynamicTable = () => {
               <TableCell>Name</TableCell>
               <TableCell>Type</TableCell>
               <TableCell>Properties</TableCell>
-              <TableCell style={{ maxWidth: '300px', width: '300px' }}>Dependant On</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -485,17 +487,6 @@ const DynamicTable = () => {
                       View/Edit
                     </Button>
                   )}
-                </TableCell>
-                <TableCell style={{ maxWidth: '300px', width: '300px' }}>
-                  <Autocomplete
-                    multiple
-                    options={getPreviousNames(rowIndex)}
-                    value={row.dependantOn}
-                    onChange={(_, newValue) => handleDependantOnChange(rowIndex, newValue)}
-                    renderInput={(params) => (
-                      <TextField {...params} variant="standard" label="Dependant On" />
-                    )}
-                  />
                 </TableCell>
                 <TableCell>
                   {rowIndex === tableData.length - 1 ? (
