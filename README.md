@@ -1,6 +1,8 @@
 ## Autores
 [Andres Ricardo Martinez Diaz](https://github.com/Ricar8o)
+
 [David Alejandro Vasquez Carreño](https://github.com/alejovasquero)
+
 [Richard Santiago Urrea Garcia](https://github.com/RichardUG)
 
 ## Licencia & Derechos de Autor
