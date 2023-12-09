@@ -22,7 +22,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Autocomplete from '@mui/material/Autocomplete';
-import { Helmet } from 'react-helmet';
+import {  Helmet } from 'react-helmet-async';
 const DynamicTable = () => {
   const [tableData, setTableData] = useState([
     {
