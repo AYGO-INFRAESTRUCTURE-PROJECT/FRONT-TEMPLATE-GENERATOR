@@ -315,7 +315,7 @@ const DynamicTable = () => {
 
   const handleSendTemplate = () => {
     const arrayJson = cleanedTemplateData;
-    fetch('https://ec2-44-200-228-38.compute-1.amazonaws.com:7000/v1/synth/deployments', {
+    fetch('https://ec2-3-210-202-202.compute-1.amazonaws.com:7000/v1/synth/deployments', {
       method: 'POST',
       mode: 'cors',
       headers: {
