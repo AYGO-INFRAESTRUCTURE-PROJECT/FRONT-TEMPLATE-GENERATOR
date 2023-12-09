@@ -21,8 +21,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
-import Autocomplete from '@mui/material/Autocomplete';
-import {  Helmet } from 'react-helmet-async';
+import Autocomplete from '@mui/material/Autocomplete'
 const DynamicTable = () => {
   const [tableData, setTableData] = useState([
     {
@@ -390,10 +389,6 @@ const DynamicTable = () => {
   };
   return (
     <Container className="centreCont">
-      <Helmet>
-        <title>Template generator</title>
-        <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"/>
-      </Helmet>
       <Box component="div" className="cardout">
         <Paper
           style={{
