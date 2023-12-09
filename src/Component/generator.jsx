@@ -321,6 +321,8 @@ const DynamicTable = () => {
       mode: 'no-cors',
       headers: {
         'Content-Type': 'application/json',
+        "http-equiv": "Content-Security-Policy",
+        "content":"upgrade-insecure-requests"
       },
       body: JSON.stringify(arrayJson),
     })
