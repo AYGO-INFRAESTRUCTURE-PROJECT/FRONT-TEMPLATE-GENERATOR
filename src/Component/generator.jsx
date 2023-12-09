@@ -316,7 +316,7 @@ const DynamicTable = () => {
 
   const handleSendTemplate = () => {
     const arrayJson = cleanedTemplateData;
-    fetch('http://main.d3sxqr1xk4jr1h.amplifyapp.com:7000/v1/synth/deployments', {
+    fetch('https://main.d3sxqr1xk4jr1h.amplifyapp.com:7000/v1/synth/deployments', {
       method: 'POST',
       mode: 'no-cors',
       headers: {
